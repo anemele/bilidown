@@ -2,7 +2,7 @@ import json
 import logging
 import os.path as op
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from hashlib import md5
 from typing import Any
 from urllib.parse import urlencode
@@ -11,7 +11,7 @@ from bilidown.utils import one_day
 
 from .api import API_NAV
 from .consts import DIR_CACHE
-from .login import session
+from .request import new_session
 from .rest import loads_rest
 from .tools import write_sample
 
@@ -48,7 +48,7 @@ def get_wbi_keys() -> WBI_Key:
         if keys.expire > time.time():
             return keys
 
-    res = session.get(API_NAV)
+    res = new_session().get(API_NAV)
     write_sample(res.content)
 
     rest = loads_rest(res.content, NAV)
@@ -62,7 +62,7 @@ def get_wbi_keys() -> WBI_Key:
         one_day(),
     )
     with open(FILE_WBI_KEY, 'w') as fp:
-        json.dump(keys, fp)
+        json.dump(asdict(keys), fp)
 
     return keys
 

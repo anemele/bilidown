@@ -9,7 +9,7 @@ def new_session():
     session.headers.update(
         {
             'user-agent': FakeUserAgent().random,
-            # 'referer': 'www.bilibili.com',
+            # 'referer': 'https://www.bilibili.com/',
         }
     )
     return session

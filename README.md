@@ -21,6 +21,14 @@ WBI 参考：<https://socialsisteryi.github.io/bilibili-API-collect/docs/misc/si
 
 用户投稿查询参考：<https://socialsisteryi.github.io/bilibili-API-collect/docs/user/space.html#%E6%8A%95%E7%A8%BF>
 
+踩坑汇总
+
+1. 请求任何含 wbi/ 的 url 必须签名
+2. 触发 403 或者 412 状态码，可能是 headers 设置有问题，headers 必须设置
+   user-agent （常见值） 和 referer （https://www.bilibili.com）
+3. 触发 352 风控校验失败，可能是没有设置 cookies，即没有登录导致的，
+   只需在请求前添加 cookies 即可
+
 **后台下载**
 
 本质上是网络爬虫，需要细心设计，防止触发反爬机制。
