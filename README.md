@@ -32,3 +32,5 @@ WBI 参考：<https://socialsisteryi.github.io/bilibili-API-collect/docs/misc/si
 **后台下载**
 
 本质上是网络爬虫，需要细心设计，防止触发反爬机制。
+
+参考：<https://socialsisteryi.github.io/bilibili-API-collect/docs/video/videostream_url.html#%E8%8E%B7%E5%8F%96%E8%A7%86%E9%A2%91%E6%B5%81%E5%9C%B0%E5%9D%80-web%E7%AB%AF>
