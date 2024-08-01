@@ -1,9 +1,12 @@
+import os.path as op
 import sys
 import time
 
+from .consts import DIR_SAMPLE
 from .download import download_video as _download_video
 from .query import dump_all_video as _dump_all_video
 from .query import query_all_video as _query_all_video
+from .utils import mkdir
 
 
 def query_video():
@@ -52,9 +55,11 @@ def download_all_video():
                 print(e)
                 continue
 
+            path = op.join(DIR_SAMPLE, x)
+            mkdir(path)
             for i, v in enumerate(vs, 1):
                 try:
-                    _download_video(v.bvid)
+                    _download_video(v.bvid, path)
                     sys.stdout.write(f'\rdone {i}')
                     time.sleep(2)  # 反爬？异步？
                 except Exception as e:

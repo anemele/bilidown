@@ -1,3 +1,4 @@
+import os.path as op
 from dataclasses import dataclass
 
 from .api import API_VIDEO_PLAYURL, API_VIDEO_VIEW
@@ -29,9 +30,12 @@ class PlayURL:
         self.durl = tuple(VideoSeg(**v) for v in durl)
 
 
-def download_video(bvid: str):
+def download_video(bvid: str, path: str = '.'):
     # 参数可以用 avid 和 bvid ，推荐 bvid
-    res = session.get(API_VIDEO_VIEW, params=wbi_sign_params(dict(bvid=bvid)))
+    # 视频清晰度 qn 参考：
+    # https://socialsisteryi.github.io/bilibili-API-collect/docs/video/videostream_url.html#qn%E8%A7%86%E9%A2%91%E6%B8%85%E6%99%B0%E5%BA%A6%E6%A0%87%E8%AF%86
+    params = dict(bvid=bvid, qn=80)
+    res = session.get(API_VIDEO_VIEW, params=wbi_sign_params(params))
     write_sample(res.content)
     data: View = loads_rest(res.content, View).data
     cid = data.cid
@@ -47,5 +51,6 @@ def download_video(bvid: str):
     # 下载视频需要请求头标明 ua 和 referer
     sess.headers.update({'referer': 'https://www.bilibili.com/'})
     for i, seg in enumerate(playurl.durl):
-        with open(f'{bvid}_{i:02d}.mp4', 'wb') as fp:
+        name = f'{bvid}_{i:02d}.mp4'
+        with open(op.join(path, name), 'wb') as fp:
             fp.write(sess.get(seg.url.replace(r'\u0026', '&')).content)
