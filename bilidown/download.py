@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from .api import API_VIDEO_PLAYURL, API_VIDEO_VIEW
 from .login import session
+from .request import new_session
 from .rest import loads_rest
 from .tools import write_sample
 from .wbi import wbi_sign_params
@@ -28,10 +29,6 @@ class PlayURL:
         self.durl = tuple(VideoSeg(**v) for v in durl)
 
 
-# 下载视频需要请求头标明 ua 和 referer
-session.headers.update({'referer': 'https://www.bilibili.com/'})
-
-
 def download_video(bvid: str):
     # 参数可以用 avid 和 bvid ，推荐 bvid
     res = session.get(API_VIDEO_VIEW, params=wbi_sign_params(dict(bvid=bvid)))
@@ -45,6 +42,10 @@ def download_video(bvid: str):
     write_sample(res.content)
     playurl: PlayURL = loads_rest(res.content, PlayURL).data
 
+    # 下载多个视频后链接会断开，因此下载视频的 session 和请求数据的 session 不用同一个
+    sess = new_session()
+    # 下载视频需要请求头标明 ua 和 referer
+    sess.headers.update({'referer': 'https://www.bilibili.com/'})
     for i, seg in enumerate(playurl.durl):
         with open(f'{bvid}_{i:02d}.mp4', 'wb') as fp:
-            fp.write(session.get(seg.url.replace(r'\u0026', '&')).content)
+            fp.write(sess.get(seg.url.replace(r'\u0026', '&')).content)

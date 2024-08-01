@@ -6,4 +6,4 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
 )
 
-ENABLE_WRITE_SAMPLE = True
+ENABLE_WRITE_SAMPLE = False
