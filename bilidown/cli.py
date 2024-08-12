@@ -68,16 +68,3 @@ def download_all_video():
             print()
     except KeyboardInterrupt:
         pass
-
-
-def download_video():
-    try:
-        print('------------------------')
-        print('bilidown@anemele')
-        print('type in `bvid` to download all video info of a bilibili UP')
-        print('leave empty to exit')
-        print('------------------------')
-        while x := input('bvid: '):
-            _dv(x)
-    except KeyboardInterrupt:
-        pass
