@@ -11,9 +11,5 @@ def mkdir(path: str, gitignore: bool = False):
             fp.write('*')
 
 
-def get_timestamp() -> str:
-    return time.strftime("%y%m%d_%H%M%S", time.localtime())
-
-
 def one_day():
     return time.time() + 86400
