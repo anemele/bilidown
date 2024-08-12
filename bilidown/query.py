@@ -124,7 +124,7 @@ def query_all_video(mid: str) -> Iterable[Video]:
 
 
 def dump_all_video(mid: str):
-    filename = f'video_{mid}.json'
+    filename = f'video_of_{mid}.json'
     filepath = op.join(DIR_SAMPLE, filename)
     vlist = [asdict(v) for v in query_all_video(mid)]
     with open(filepath, 'w') as fp:
