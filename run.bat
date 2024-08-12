@@ -1,1 +1,1 @@
-@python -m bilidown
+@.venv\Scripts\python -m bilidown
