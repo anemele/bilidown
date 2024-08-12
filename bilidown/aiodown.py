@@ -85,7 +85,10 @@ async def _download_all_video(mid: str):
         *(_download_video(v.bvid, root) for v in vs),
         return_exceptions=True,
     )
-    print(f'done {len(ret)}')
+
+    cnt_done = ret.count(None)
+    cnt_all = len(ret)
+    print(f'done:{cnt_done}, fail:{cnt_all-cnt_done}')
 
 
 def download_all_video(mid: str):
