@@ -7,8 +7,11 @@ import aiohttp
 from fake_useragent import FakeUserAgent
 
 from .api import API_VIDEO_PLAYURL, API_VIDEO_VIEW
+from .consts import DIR_SAMPLE
+from .query import query_all_video
 from .rest import loads_rest
 from .tools import write_sample
+from .utils import mkdir
 from .wbi import wbi_sign_params
 
 
@@ -33,7 +36,7 @@ class PlayURL:
         self.durl = tuple(VideoSeg(**v) for v in durl)
 
 
-async def _download_video(bvid: str, path: str = '.'):
+async def _download_video(bvid: str, path: str):
     async with aiohttp.ClientSession() as session:
         session.headers.update(
             {
@@ -67,6 +70,23 @@ async def _download_video(bvid: str, path: str = '.'):
             async with aiofiles.open(op.join(path, name), 'wb') as fp:
                 await fp.write(content)
 
+            await asyncio.sleep(2)
 
-def download_video(bvid: str):
-    asyncio.run(_download_video(bvid))
+
+def download_video(bvid: str, path: str = '.'):
+    asyncio.run(_download_video(bvid, path))
+
+
+async def _download_all_video(mid: str):
+    vs = query_all_video(mid)
+    root = op.join(DIR_SAMPLE, mid)
+    mkdir(root)
+    ret = await asyncio.gather(
+        *(_download_video(v.bvid, root) for v in vs),
+        return_exceptions=True,
+    )
+    print(f'done {len(ret)}')
+
+
+def download_all_video(mid: str):
+    asyncio.run(_download_all_video(mid))
