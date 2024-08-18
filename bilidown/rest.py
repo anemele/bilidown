@@ -1,22 +1,26 @@
-import json
-import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import Generic, Type, TypeVar
 
-logger = logging.getLogger(__file__)
+from mashumaro.mixins.orjson import DataClassORJSONMixin
+
+T = TypeVar('T')
 
 
 @dataclass
-class REST:
+class Rest(
+    Generic[T],
+    DataClassORJSONMixin,
+):
     code: int
     message: str
     ttl: int
-    data: Any
+    data: T
 
 
-def loads_rest(content: bytes, cls) -> REST:
-    logger.debug(content)
-    data = json.loads(content)
-    rest: REST = REST(**data)
-    rest.data = cls(**rest.data)
-    return rest
+# See the runtime bug
+# https://github.com/Fatal1ty/mashumaro/issues/86#issuecomment-1325304599
+def loads_rest(content: bytes, cls: Type[T]) -> Rest[T]:
+    class Model(Rest[cls]):
+        pass
+
+    return Model.from_json(content)

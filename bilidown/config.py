@@ -1,0 +1,1 @@
+ENABLE_WRITE_SAMPLE = False

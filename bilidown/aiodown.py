@@ -5,19 +5,19 @@ from dataclasses import dataclass
 import aiofiles
 import aiohttp
 from fake_useragent import FakeUserAgent
+from mashumaro.mixins.orjson import DataClassORJSONMixin
 
 from .api import API_VIDEO_PLAYURL, API_VIDEO_VIEW
 from .consts import DIR_SAMPLE
 from .query import query_all_video
 from .rest import loads_rest
-from .tools import write_sample
-from .utils import mkdir
+from .utils import mkdir, write_sample
 from .wbi import wbi_sign_params
 
 
-class View:
-    def __init__(self, cid: int, **kw) -> None:
-        self.cid = cid
+@dataclass
+class View(DataClassORJSONMixin):
+    cid: int
 
 
 @dataclass
@@ -31,9 +31,9 @@ class VideoSeg:
     backup_url: list[str]
 
 
-class PlayURL:
-    def __init__(self, durl: list[dict], **kw) -> None:
-        self.durl = tuple(VideoSeg(**v) for v in durl)
+@dataclass
+class PlayURL(DataClassORJSONMixin):
+    durl: list[VideoSeg]
 
 
 async def _download_video(bvid: str, path: str):
@@ -52,18 +52,17 @@ async def _download_video(bvid: str, path: str):
         async with session.get(API_VIDEO_VIEW, params=wbi_sign_params(params)) as res:
             content = await res.read()
         write_sample(content)
-        data: View = loads_rest(content, View).data
-        cid = data.cid
+        cid = loads_rest(content, View).data.cid
 
         params = dict(bvid=bvid, cid=cid)
         async with session.get(API_VIDEO_PLAYURL, params=wbi_sign_params(params)) as res:
             content = await res.read()
         write_sample(content)
-        playurl: PlayURL = loads_rest(content, PlayURL).data
+        durl = loads_rest(content, PlayURL).data.durl
 
         session.headers.update({'referer': 'https://www.bilibili.com/'})
 
-        for i, seg in enumerate(playurl.durl):
+        for i, seg in enumerate(durl):
             name = f'{bvid}_{i:02d}.mp4'
             async with session.get(seg.url.replace(r'\u0026', '&')) as res:
                 content = await res.read()
@@ -78,9 +77,9 @@ def download_video(bvid: str, path: str = '.'):
 
 
 async def _download_all_video(mid: str):
-    vs = query_all_video(mid)
     root = op.join(DIR_SAMPLE, mid)
     mkdir(root)
+    vs = query_all_video(mid)
     ret = await asyncio.gather(
         *(_download_video(v.bvid, root) for v in vs),
         return_exceptions=True,
@@ -88,7 +87,7 @@ async def _download_all_video(mid: str):
 
     cnt_done = ret.count(None)
     cnt_all = len(ret)
-    print(f'done:{cnt_done}, fail:{cnt_all-cnt_done}')
+    print(f'[video] done:{cnt_done}, fail:{cnt_all-cnt_done}')
 
 
 def download_all_video(mid: str):

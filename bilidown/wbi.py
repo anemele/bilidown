@@ -1,21 +1,18 @@
-import json
-import logging
 import os.path as op
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from hashlib import md5
 from typing import Any
 from urllib.parse import urlencode
 
-from bilidown.utils import one_day
+from mashumaro.mixins.orjson import DataClassORJSONMixin
 
 from .api import API_NAV
-from .consts import DIR_CACHE
+from .log import logger
+from .path import FILE_WBI_KEY
 from .request import new_session
 from .rest import loads_rest
-from .tools import write_sample
-
-logger = logging.getLogger(__file__)
+from .utils import one_day, write_sample
 
 
 @dataclass
@@ -24,26 +21,23 @@ class WBI_IMG:
     sub_url: str
 
 
-# @dataclass
-class NAV:
-    def __init__(self, wbi_img, **kw) -> None:
-        self.wbi_img = WBI_IMG(**wbi_img)  # type: ignore
+@dataclass
+class NAV(DataClassORJSONMixin):
+    wbi_img: WBI_IMG
 
 
 @dataclass
-class WBI_Key:
+class WBI_Key(DataClassORJSONMixin):
     img_key: str
     sub_key: str
     expire: float
 
 
-FILE_WBI_KEY = op.join(DIR_CACHE, 'wbi_key.json')
-
-
 def get_wbi_keys() -> WBI_Key:
     if op.exists(FILE_WBI_KEY):
         with open(FILE_WBI_KEY, 'rb') as fp:
-            keys: WBI_Key = json.load(fp, object_hook=lambda obj: WBI_Key(**obj))
+            content = fp.read()
+        keys = WBI_Key.from_json(content)
         logger.debug(keys)
         if keys.expire > time.time():
             return keys
@@ -52,17 +46,17 @@ def get_wbi_keys() -> WBI_Key:
     write_sample(res.content)
 
     rest = loads_rest(res.content, NAV)
-    data: NAV = rest.data
+    data = rest.data
     wbi = data.wbi_img
     logger.debug(wbi)
 
     keys = WBI_Key(
-        wbi.img_url.rsplit('/', 1)[-1].split('.', 1)[0],
-        wbi.sub_url.rsplit('/', 1)[-1].split('.', 1)[0],
-        one_day(),
+        img_key=wbi.img_url.rsplit('/', 1)[-1].split('.', 1)[0],
+        sub_key=wbi.sub_url.rsplit('/', 1)[-1].split('.', 1)[0],
+        expire=one_day(),
     )
-    with open(FILE_WBI_KEY, 'w') as fp:
-        json.dump(asdict(keys), fp)
+    with open(FILE_WBI_KEY, 'wb') as fp:
+        fp.write(keys.to_jsonb())
 
     return keys
 
