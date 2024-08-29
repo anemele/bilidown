@@ -1,10 +1,8 @@
 import math
 import os.path as op
-import sys
 from dataclasses import dataclass
-from enum import Enum
-from typing import Iterable
-
+from typing import Generator, Literal
+import rich
 import orjson
 from mashumaro.mixins.orjson import DataClassORJSONMixin
 
@@ -18,18 +16,18 @@ from .wbi import wbi_sign_params
 
 @dataclass
 class Video:
-    # comment: int
+    comment: int
     # typeid: int
-    # play: int
+    play: int
     # pic: str
     # subtitle: str
     # description: str
     # copyright: str
-    # title: str
-    # review: int
+    title: str
+    review: int
     # author: str
     mid: int
-    # created: int
+    created: int
     # length: str
     # video_review: int
     aid: int
@@ -74,16 +72,13 @@ class Arc(DataClassORJSONMixin):
     page: Page
 
 
-class OrderEnum(Enum):
-    pubdate = 'pubdate'
-    click = 'click'
-    stow = 'stow'
+OrderEnum = Literal["pubdate", "click", "stow"]
 
 
 def gen_params(
     mid: str,
-    order: str = OrderEnum.pubdate.value,
-    keyword: str = '',
+    order: OrderEnum = "pubdate",
+    keyword: str = "",
     pn: int = 1,
     ps: int = 30,
 ) -> dict[str, str | int]:
@@ -100,12 +95,12 @@ def gen_params(
 session.headers.update(
     {
         # 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
-        'referer': 'https://www.bilibili.com/',
+        "referer": "https://www.bilibili.com/",
     }
 )
 
 
-def query_all_video(mid: str) -> Iterable[Video]:
+def query_all_video(mid: str) -> Generator[Video, None, None]:
     def inner(params):
         res = session.get(API_UP_VIDEO, params=wbi_sign_params(params))
         write_sample(res.content)
@@ -117,17 +112,17 @@ def query_all_video(mid: str) -> Iterable[Video]:
     page = init_data.page
     all_page = math.ceil(page.count / page.ps)
     yield from init_data.list.vlist
-    sys.stdout.write(f'\r[page] 1/{all_page}')
+    rich.print(f"\r[page] 1/{all_page}", end="")
 
     for i in range(all_page - 1):
         yield from inner(gen_params(mid, pn=i + 2)).list.vlist
-        sys.stdout.write(f'\r[page] {i+2}/{all_page}')
+        rich.print(f"\r[page] {i+2}/{all_page}", end="")
     print()
 
 
 def dump_all_video(mid: str):
-    filename = f'video_of_{mid}.json'
+    filename = f"video_of_{mid}.json"
     filepath = op.join(DIR_SAMPLE, filename)
     vlist = query_all_video(mid)
-    with open(filepath, 'wb') as fp:
-        fp.write(orjson.dumps(vlist))
+    with open(filepath, "wb") as fp:
+        fp.write(orjson.dumps(list(vlist)))
