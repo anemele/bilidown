@@ -2,7 +2,7 @@ import math
 import os.path as op
 from dataclasses import dataclass
 from typing import Generator, Literal
-import rich
+
 import orjson
 from mashumaro.mixins.orjson import DataClassORJSONMixin
 
@@ -112,11 +112,11 @@ def query_all_video(mid: str) -> Generator[Video, None, None]:
     page = init_data.page
     all_page = math.ceil(page.count / page.ps)
     yield from init_data.list.vlist
-    rich.print(f"\r[page] 1/{all_page}", end="")
+    print(f"\r[page] 1/{all_page}", end="")
 
     for i in range(all_page - 1):
         yield from inner(gen_params(mid, pn=i + 2)).list.vlist
-        rich.print(f"\r[page] {i+2}/{all_page}", end="")
+        print(f"\r[page] {i+2}/{all_page}", end="")
     print()
 
 
